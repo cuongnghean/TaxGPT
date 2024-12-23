@@ -1,6 +1,7 @@
 import os
 import logging
 import requests
+import torch
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import OllamaLLM
@@ -21,11 +22,18 @@ logging.basicConfig(
     handlers=[logging.StreamHandler(), logging.FileHandler("streamlit_app.log", mode="w")],
 )
 
+# Kiểm tra GPU
+device = "cuda" if torch.cuda.is_available() else "cpu"
+logging.info(f"Using device: {device}")
+
 # Đường dẫn đến thư mục vectorstore
 persist_directory = "vectorstore/chroma_db"
 
 # Khởi tạo embeddings từ Hugging Face
 embeddings = HuggingFaceEmbeddings(model_name="bkai-foundation-models/vietnamese-bi-encoder")
+
+# Di chuyển mô hình embeddings lên GPU nếu có GPU
+embeddings.model.to(device)
 
 # Load Vectorstore từ thư mục
 vectorstore = Chroma(
@@ -36,6 +44,9 @@ vectorstore = Chroma(
 
 # Khởi tạo mô hình Ollama
 ollama = OllamaLLM(model=os.getenv("OLLAMA_MODEL"))
+
+# Nếu Ollama hỗ trợ GPU, di chuyển mô hình lên GPU (kiểm tra tài liệu Ollama về cách sử dụng GPU)
+ollama.model.to(device)
 
 def web_search(query: str) -> str:
     """Tìm kiếm trên web qua Google CSE API."""
@@ -104,4 +115,3 @@ def generate_answer(question: str) -> str:
         return f"{answer}\n\n**Trích dẫn nguồn:**\n" + "\n\n".join(sources)
     else:
         return f"{answer}\n\n**Không có nguồn trích dẫn.**"
-
