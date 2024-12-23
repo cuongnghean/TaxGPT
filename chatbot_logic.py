@@ -6,6 +6,7 @@ from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import OllamaLLM
 from dotenv import load_dotenv
+from sentence_transformers import SentenceTransformer
 
 # Tải biến môi trường từ file .env
 load_dotenv()
@@ -29,11 +30,10 @@ logging.info(f"Using device: {device}")
 # Đường dẫn đến thư mục vectorstore
 persist_directory = "vectorstore/chroma_db"
 
-# Khởi tạo embeddings từ Hugging Face
-embeddings = HuggingFaceEmbeddings(model_name="bkai-foundation-models/vietnamese-bi-encoder")
-
-# Di chuyển mô hình embeddings lên GPU nếu có GPU
-embeddings.model.to(device)
+# Khởi tạo embeddings từ Hugging Face và di chuyển mô hình lên GPU nếu có GPU
+sentence_transformer_model = SentenceTransformer("bkai-foundation-models/vietnamese-bi-encoder")
+sentence_transformer_model = sentence_transformer_model.to(device)
+embeddings = HuggingFaceEmbeddings(model=sentence_transformer_model)
 
 # Load Vectorstore từ thư mục
 vectorstore = Chroma(
